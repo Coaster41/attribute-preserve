@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from model import *
 import logging
-from dataset import get_loader
+from dataset import get_loader, get10
 from utils import set_random_seed, compute_mAP, AverageMeter
 import argparse
 import random
@@ -66,8 +66,10 @@ def main():
 
     ##Create model
 
-    teacher_model = VGG('VGG16_VOC', input_dims=(3,227,227))
-    model = VGG('VGG16_VOC', input_dims=(3,227,227))
+    # teacher_model = VGG('VGG16_VOC', input_dims=(3,227,227))
+    # model = VGG('VGG16_VOC', input_dims=(3,227,227))
+    teacher_model = GraSP_VGG()
+    model = GraSP_VGG()
     if args.gpu:
         model = torch.nn.DataParallel(model).cuda()
         teacher_model = torch.nn.DataParallel(teacher_model).cuda()
@@ -75,17 +77,22 @@ def main():
         model = torch.nn.DataParallel(model)
         teacher_model = torch.nn.DataParallel(teacher_model)
 
-    _, mAP_full = load_model(args.model_path, model)
-    _, teacher_mAP = load_model(args.model_path, teacher_model)
+    model.load_state_dict(torch.load(args.model_path), strict=False)
+    teacher_model.load_state_dict(torch.load(args.model_path), strict=False)
+    mAP_full = 0.93
+    # _, mAP_full = load_model(args.model_path, model)
+    # _, teacher_mAP = load_model(args.model_path, teacher_model)
 
-    train_loader = get_loader(data_name='VOC2012', 
-                            data_path=args.data_path,
-                            split='train', 
-                            batch_size= args.batch_size)
-    val_loader = get_loader(data_name='VOC2012', 
-                            data_path=args.data_path,
-                            split='val', 
-                            batch_size= args.batch_size)
+    train_loader, val_loader = get10(batch_size=200, num_workers=1)
+
+    # train_loader = get_loader(data_name='VOC2012', 
+    #                         data_path=args.data_path,
+    #                         split='train', 
+    #                         batch_size= args.batch_size)
+    # val_loader = get_loader(data_name='VOC2012', 
+    #                         data_path=args.data_path,
+    #                         split='val', 
+    #                         batch_size= args.batch_size)
 
     criterion = nn.MultiLabelSoftMarginLoss()
 

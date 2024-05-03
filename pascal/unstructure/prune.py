@@ -13,6 +13,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from torchvision import datasets, transforms
+import torchvision.transforms as T
+
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('--gpu', action='store_true')
 parser.add_argument('--seed', default=None, type=int, 
@@ -40,7 +43,8 @@ def main():
         os.mkdir(args.exp_name)
 
     # create model
-    model = VGG('VGG16_VOC', input_dims=(3,227,227))
+    # model = VGG('VGG16_VOC', input_dims=(3,227,227))
+    model = GraSP_VGG()
 
     if args.gpu:
         model = torch.nn.DataParallel(model).cuda()
@@ -49,10 +53,12 @@ def main():
 
     _, mAP = load_model(args.model_path, model)
 
-    val_loader = get_loader(data_name='VOC2012', 
-                            data_path=args.data_path,
-                            split='val', 
-                            batch_size= args.batch_size)
+    train_loader, val_loader = get10(batch_size=200, num_workers=1)
+
+    # val_loader = get_loader(data_name='VOC2012', 
+    #                         data_path=args.data_path,
+    #                         split='val', 
+    #                         batch_size= args.batch_size)
 
     criterion = nn.MultiLabelSoftMarginLoss().cuda()
 
@@ -133,6 +139,7 @@ def validate(val_loader, model, criterion):
 def save_checkpoint(state, is_best, checkpoint, filename='pruned.pth.tar'):
     filepath = os.path.join(checkpoint, filename)
     torch.save(state, filepath)
+    torch.save(state['state_dict'], os.path.join("{}_state".format(checkpoint), filename))
 
 if __name__ == '__main__':
     main()

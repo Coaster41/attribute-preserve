@@ -95,3 +95,51 @@ def test():
     x = torch.randn(2,3,32,32)
     y = net(x)
     print(y.size())
+
+
+class GraSP_VGG(nn.Module):
+    def __init__(self, dataset='cifar10', depth=19, init_weights=True, cfg=None, affine=True, batchnorm=True, is_sparse=False, is_mask=False):
+        super(GraSP_VGG, self).__init__()
+        if cfg is None:
+            cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512]
+        self._AFFINE = affine
+        self.dataset = dataset
+        num_classes = 10
+        self.feature = self.make_layers(cfg, batchnorm)
+        self.classifier = nn.Linear(cfg[-1], num_classes)
+
+    def make_layers(self, cfg, batch_norm=False):
+        layers = []
+        in_channels = 3
+        for v in cfg:
+            if v == 'M':
+                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+            else:
+                conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1, bias=False)
+                if batch_norm:
+                    layers += [conv2d, nn.BatchNorm2d(v, affine=self._AFFINE), nn.ReLU(inplace=True)]
+                else:
+                    layers += [conv2d, nn.ReLU(inplace=True)]
+                in_channels = v
+        return nn.Sequential(*layers)
+    
+    def forward(self, x, mode=None, TS=None, grad_out=None, erase_channel=None):
+
+        f0 = self.feature[:44](x)
+        if mode == "eval":
+            pass
+        else:
+            f0.retain_grad()
+        out = self.feature[44:](f0)
+        out = out.view(out.size(0), -1)
+        out = self.classifier(out)
+
+        if mode == 'swa':
+            if not isinstance(grad_out, Variable):
+                ind = out.data.max(1)[1]
+                grad_out = out.data.clone().fill_(0.0).scatter_(1, ind.unsqueeze(0).t(), 1.0)
+
+            swa = self.cal_grad(out, grad_out, TS, [f0], erase_channel)
+            return out, swa, grad_out
+        else:
+            return out, [f0], None
