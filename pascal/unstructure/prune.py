@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from model import *
 import logging
-from dataset import get_loader
+from dataset import get_loader, get10
 from utils import set_random_seed, compute_mAP, AverageMeter, load_model
 import argparse
 import random
