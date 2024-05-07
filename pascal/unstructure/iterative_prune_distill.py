@@ -95,7 +95,7 @@ def main():
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(val_loader):
             inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
+            outputs = model(inputs, mode='eval')
             loss = criterion(outputs, targets)
             print(batch_idx, loss.item())
     print("model works!")
