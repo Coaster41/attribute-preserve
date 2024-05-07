@@ -125,12 +125,13 @@ class GraSP_VGG(nn.Module):
     
     def forward(self, x, mode=None, TS=None, grad_out=None, erase_channel=None):
 
-        f0 = self.feature[:44](x)
-        if mode == "eval":
-            pass
-        else:
-            f0.retain_grad()
-        out = self.feature[44:](f0)
+        # f0 = self.feature[:44](x)
+        # if mode == "eval":
+        #     pass
+        # else:
+        #     f0.retain_grad()
+        # out = self.feature[44:](f0)
+        out = self.feature(x)
         out = out.view(out.size(0), -1)
         out = self.classifier(out)
 
