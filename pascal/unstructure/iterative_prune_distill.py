@@ -12,6 +12,7 @@ import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 parser = argparse.ArgumentParser(description='PyTorch Unstructured Pruning Pascal Training with distillation')
 
@@ -57,6 +58,7 @@ parser.add_argument('--stochastic', action='store_true',
                     help='Use stochastic matching or Not')
 parser.add_argument('--drop_percent', default=0.1, type=float,
                     help='For stochasticity, drop ratio')
+device = torch.device(f"cuda:0") if torch.cuda.is_available() else 'cpu'
 
 def main():
     global args
@@ -87,18 +89,22 @@ def main():
 
     train_loader, val_loader = get10(batch_size=200, num_workers=1)
 
+    # criterion = nn.CrossEntropyLoss()
     criterion = nn.MultiLabelSoftMarginLoss()
 
     print('Full Network Starting mAP : {}'.format(mAP_full))
 
-    print('test model')
-    with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(val_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs, mode='eval')
-            loss = criterion(outputs, targets)
-            print(batch_idx, loss.item())
-    print("model works!")
+    # print('test model')
+    # with torch.no_grad():
+    #     for batch_idx, (inputs, targets) in enumerate(val_loader):
+    #         inputs, targets = inputs.to(device), targets.to(device)
+    #         targets_one = torch.zeros((len(targets),10), device=device)
+    #         targets_one[np.arange(len(targets)), targets]
+    #         outputs, _, _ = model(inputs, mode='eval')
+    #         print(outputs.shape, targets.shape)
+    #         loss = criterion(outputs, targets_one)
+    #         print(batch_idx, loss.item())
+    # print("model works!")
 
     ##For each iteration
     for it in range(1, args.iter+1):
@@ -184,6 +190,10 @@ def train(train_loader, model, teacher_model, criterion, optimizer, epoch, logge
         if args.gpu:
             input = input.to('cuda', non_blocking=True)
             target = target.to('cuda', non_blocking=True)
+        
+        targets_one = torch.zeros((len(target),10), device=device)
+        targets_one[np.arange(len(target)), target] = 1
+        target = targets_one
 
         if args.stochastic:
             sample_number = int(512 * args.drop_percent)
@@ -254,6 +264,9 @@ def validate(val_loader, model, criterion, epoch, logger):
             if args.gpu:
                 images = images.to('cuda', non_blocking=True)
                 target = target.to('cuda', non_blocking=True)
+            targets_one = torch.zeros((len(target),10), device=device)
+            targets_one[np.arange(len(target)), target] = 1
+            target = targets_one
 
             # compute output
             output, _, _ = model(images, mode='eval')
