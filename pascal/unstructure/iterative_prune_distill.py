@@ -64,6 +64,8 @@ def main():
     if args.seed is not None:
         set_random_seed(args.seed)
 
+    device = torch.device(f"cuda:0") if torch.cuda.is_available() else 'cpu'
+
     ##Create model
 
     # teacher_model = VGG('VGG16_VOC', input_dims=(3,227,227))
@@ -85,18 +87,18 @@ def main():
 
     train_loader, val_loader = get10(batch_size=200, num_workers=1)
 
-    # train_loader = get_loader(data_name='VOC2012', 
-    #                         data_path=args.data_path,
-    #                         split='train', 
-    #                         batch_size= args.batch_size)
-    # val_loader = get_loader(data_name='VOC2012', 
-    #                         data_path=args.data_path,
-    #                         split='val', 
-    #                         batch_size= args.batch_size)
-
     criterion = nn.MultiLabelSoftMarginLoss()
 
     print('Full Network Starting mAP : {}'.format(mAP_full))
+
+    print('test model')
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(val_loader):
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            print(batch_idx, loss.item())
+    print("model works!")
 
     ##For each iteration
     for it in range(1, args.iter+1):
