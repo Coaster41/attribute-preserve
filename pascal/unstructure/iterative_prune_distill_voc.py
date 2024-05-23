@@ -229,9 +229,9 @@ def train(train_loader, model, teacher_model, criterion, optimizer, epoch, logge
             input = input.to('cuda', non_blocking=True)
             target = target.to('cuda', non_blocking=True)
         
-        targets_one = torch.zeros((len(target),10), device=device)
-        targets_one[np.arange(len(target)), target] = 1
-        target = targets_one
+        # targets_one = torch.zeros((len(target),10), device=device)
+        # targets_one[np.arange(len(target)), target] = 1
+        # target = targets_one
 
         if args.stochastic:
             sample_number = int(512 * args.drop_percent)
@@ -302,9 +302,9 @@ def validate(val_loader, model, criterion, epoch, logger):
             if args.gpu:
                 images = images.to('cuda', non_blocking=True)
                 target = target.to('cuda', non_blocking=True)
-            targets_one = torch.zeros((len(target),10), device=device)
-            targets_one[np.arange(len(target)), target] = 1
-            target = targets_one
+            # targets_one = torch.zeros((len(target),10), device=device)
+            # targets_one[np.arange(len(target)), target] = 1
+            # target = targets_one
 
             # compute output
             output, _, _ = model(images, mode='eval')
