@@ -369,7 +369,7 @@ class ResNet(nn.Module):
         out = self.fc(out)
         if self.attribute_preserve:
             if mode == 'swa':
-                if not isinstance(grad_out, nn.Variable):
+                if not isinstance(grad_out, torch.autograd.Variable):
                     ind = out.data.max(1)[1]
                     grad_out = out.data.clone().fill_(0.0).scatter_(1, ind.unsqueeze(0).t(), 1.0)
 
