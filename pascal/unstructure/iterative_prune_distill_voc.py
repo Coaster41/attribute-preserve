@@ -71,8 +71,8 @@ class VocModel(nn.Module):
         # Replace last layer
         self.network.fc = nn.Linear(self.network.fc.in_features, num_classes)
 
-    def forward(self, xb):
-        return self.network(xb)
+    def forward(self, xb, mode=None, TS=None, grad_out=None, erase_channel=None):
+        return self.network(xb, mode, TS, grad_out, erase_channel)
 
 class Data:
     def __init__(self):
