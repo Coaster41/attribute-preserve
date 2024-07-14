@@ -358,13 +358,13 @@ class ResNet(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
+        x = self.layer4(x)
         if mode == "eval" or self.attribute_preserve == False:
             pass
         else:
             x.retain_grad()
-        out = self.layer4(x)
 
-        out = self.avgpool(out)
+        out = self.avgpool(x)
         out = torch.flatten(out, 1)
         out = self.fc(out)
         if self.attribute_preserve:
